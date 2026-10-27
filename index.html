@@ -22,15 +22,22 @@ function fetchTimeout(url, opts, ms) {
   });
 }
 
-// 主通道：GitHub API 读取仓库里的 target.txt —— 写入后立即生效，无需等 Pages 部署
-// 备通道：同源 ./target.txt —— 无 API 限流，但 Pages 部署有几十秒延迟
+// 三条通道，按"无限流优先"排序：
+//   主：同源 ./target.txt —— 走 GitHub Pages CDN，没有任何次数限制，全班同时扫码也不怕
+//   备：GitHub API —— 写入后即时生效，但匿名请求只有 60 次/小时，只能兜底
+//   再备：raw.githubusercontent.com —— 另一条 CDN 路径
+// 地址稳定后 target.txt 里的值一直有效，主通道足够了。
 function getTarget(t) {
-  return fetchTimeout('https://api.github.com/repos/hancongjian/book/contents/target.txt?t=' + t, { cache: 'no-store' }, 2500)
-    .then(function (r) { if (!r.ok) throw new Error('api ' + r.status); return r.json(); })
-    .then(function (j) { return atob(j.content.replace(/\n/g, '')); })
+  return fetchTimeout('./target.txt?t=' + t, { cache: 'no-store' }, 3500)
+    .then(function (r) { if (!r.ok) throw new Error('pages ' + r.status); return r.text(); })
     .catch(function () {
-      return fetchTimeout('./target.txt?t=' + t, { cache: 'no-store' }, 4000)
-        .then(function (r) { if (!r.ok) throw new Error('pages ' + r.status); return r.text(); });
+      return fetchTimeout('https://api.github.com/repos/hancongjian/book/contents/target.txt?t=' + t, { cache: 'no-store' }, 2500)
+        .then(function (r) { if (!r.ok) throw new Error('api ' + r.status); return r.json(); })
+        .then(function (j) { return atob(j.content.replace(/\n/g, '')); })
+        .catch(function () {
+          return fetchTimeout('https://raw.githubusercontent.com/hancongjian/book/main/target.txt?t=' + t, { cache: 'no-store' }, 3000)
+            .then(function (r) { if (!r.ok) throw new Error('raw ' + r.status); return r.text(); });
+        });
     });
 }
 
@@ -46,7 +53,7 @@ function go() {
     })
     .catch(function () {
       tries++;
-      if (tries < 6) { setTimeout(go, 2000); return; }
+      if (tries < 8) { setTimeout(go, 2000); return; }
       m.textContent = '管理员正在切换网络，约 1 分钟后可恢复，请点击下方按钮重试';
       b.style.display = 'inline-block';
     });

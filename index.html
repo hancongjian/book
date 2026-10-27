@@ -2,16 +2,56 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-store">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>正在进入实验室预约…</title>
 </head>
-<body style="font-family:sans-serif;text-align:center;padding-top:40vh">
-<p id="m">正在进入实验室预约系统…</p>
+<body style="font-family:-apple-system,sans-serif;text-align:center;padding-top:38vh;color:#333;background:#fff">
+<p id="m" style="font-size:16px">正在进入实验室预约系统…</p>
+<button id="b" onclick="go()" style="display:none;margin-top:18px;padding:10px 24px;font-size:15px;border:1px solid #ccc;border-radius:10px;background:#fff;color:#333">重新加载</button>
 <script>
-fetch("https://api.github.com/repos/hancongjian/book/contents/target.txt?t=" + Date.now(), { headers: { "Accept": "application/vnd.github+json" } })
-  .then(function (r) { return r.json(); })
-  .then(function (j) { location.replace(atob(j.content.replace(/\n/g, ""))); })
-  .catch(function () { document.getElementById("m").textContent = "打开失败，请刷新重试"; });
+var tries = 0;
+
+function fetchTimeout(url, opts, ms) {
+  return new Promise(function (resolve, reject) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); reject(new Error('timeout')); }, ms);
+    fetch(url, Object.assign({ signal: ctrl.signal }, opts || {}))
+      .then(function (r) { clearTimeout(timer); resolve(r); })
+      .catch(function (e) { clearTimeout(timer); reject(e); });
+  });
+}
+
+// 主通道：GitHub API 读取仓库里的 target.txt —— 写入后立即生效，无需等 Pages 部署
+// 备通道：同源 ./target.txt —— 无 API 限流，但 Pages 部署有几十秒延迟
+function getTarget(t) {
+  return fetchTimeout('https://api.github.com/repos/hancongjian/book/contents/target.txt?t=' + t, { cache: 'no-store' }, 2500)
+    .then(function (r) { if (!r.ok) throw new Error('api ' + r.status); return r.json(); })
+    .then(function (j) { return atob(j.content.replace(/\n/g, '')); })
+    .catch(function () {
+      return fetchTimeout('./target.txt?t=' + t, { cache: 'no-store' }, 4000)
+        .then(function (r) { if (!r.ok) throw new Error('pages ' + r.status); return r.text(); });
+    });
+}
+
+function go() {
+  var m = document.getElementById('m'), b = document.getElementById('b');
+  b.style.display = 'none';
+  m.textContent = '正在进入实验室预约系统…';
+  getTarget(Date.now())
+    .then(function (txt) {
+      var u = (txt || '').trim();
+      if (!/^https:\/\/[a-z0-9.-]+/i.test(u)) throw new Error('bad');
+      location.replace(u);
+    })
+    .catch(function () {
+      tries++;
+      if (tries < 6) { setTimeout(go, 2000); return; }
+      m.textContent = '管理员正在切换网络，约 1 分钟后可恢复，请点击下方按钮重试';
+      b.style.display = 'inline-block';
+    });
+}
+go();
 </script>
 </body>
 </html>

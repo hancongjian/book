@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#2563EB">
+<meta http-equiv="Cache-Control" content="no-store">
+<title>实验室预约</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#F7F8FA;color:#111827;font-size:14px;
+       font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+  button{font-family:inherit;border:0;background:none;cursor:pointer;color:inherit}
+  .top{position:sticky;top:0;z-index:9;background:#fff;border-bottom:1px solid #EEF0F3;
+       padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+  .brand{font-size:17px;font-weight:700;letter-spacing:.02em}
+  .who{font-size:12px;color:#6B7280;margin-top:2px}
+  .ghost{font-size:13px;color:#2563EB;padding:6px 10px;border-radius:8px;background:#F1F5FF}
+  main{max-width:520px;margin:0 auto;padding:16px 16px 96px}
+  .card{background:#fff;border:1px solid #EEF0F3;border-radius:14px;padding:16px;margin-bottom:12px}
+  .title{font-size:15px;font-weight:700;margin:0 0 4px}
+  .muted{color:#6B7280;font-size:12px;line-height:1.7;margin:0}
+  .field{display:block;width:100%;height:46px;border:1px solid #E5E7EB;border-radius:10px;
+         padding:0 12px;font-size:14px;background:#fff;margin-top:10px;outline:none}
+  .field:focus{border-color:#2563EB}
+  .primary{display:block;width:100%;height:46px;border-radius:10px;background:#2563EB;color:#fff;
+           font-size:15px;font-weight:600;margin-top:14px}
+  .primary:disabled{background:#BFD3F8}
+  .link{display:block;width:100%;text-align:center;color:#2563EB;font-size:13px;margin-top:12px}
+  .err{color:#DC2626;font-size:12px;margin:10px 0 0;min-height:16px}
+  .ok{color:#059669;font-size:12px;margin:10px 0 0;min-height:16px}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;padding:8px 14px;border-radius:999px;background:#fff;border:1px solid #E5E7EB;
+        font-size:13px;color:#374151}
+  .chip.on{background:#2563EB;border-color:#2563EB;color:#fff;font-weight:600}
+  .labs{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px}
+  .lab{flex:0 0 auto;padding:8px 16px;border-radius:10px;background:#fff;border:1px solid #E5E7EB;font-size:13px}
+  .lab.on{background:#EFF4FF;border-color:#93B4F8;color:#1D4ED8;font-weight:600}
+  .item{display:flex;align-items:center;justify-content:space-between;gap:12px;
+        background:#fff;border:1px solid #EEF0F3;border-radius:12px;padding:13px 15px;margin-bottom:8px}
+  .item.on{border-color:#2563EB;background:#F7FAFF}
+  .item .n{font-size:14px;font-weight:600}
+  .item .m{font-size:12px;color:#9CA3AF;margin-top:3px}
+  .item .go{font-size:12px;color:#2563EB;flex:0 0 auto}
+  .slots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .slot{min-height:40px;height:auto;border-radius:9px;border:1px solid #E5E7EB;background:#fff;
+        font-size:12px;color:#374151;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;padding:3px 2px}
+  .slot.free{border-color:#C7D7F5;color:#1D4ED8}
+  .slot.sel{background:#2563EB;border-color:#2563EB;color:#fff;font-weight:600}
+  .slot.mine{background:#ECFDF5;border-color:#A7F3D0;color:#047857}
+  .slot.busy{background:#F3F4F6;color:#9CA3AF}
+  .slot.busy .t{text-decoration:line-through;font-size:11px}
+  .slot.busy .o{font-size:10px;color:#6B7280;margin-top:1px;max-width:100%;
+                overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:#6B7280}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+  .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .tag{font-size:11px;padding:3px 8px;border-radius:999px;background:#F3F4F6;color:#6B7280}
+  .tag.act{background:#ECFDF5;color:#047857}
+  .tag.can{background:#F3F4F6;color:#9CA3AF}
+  .tag.vio{background:#FEF2F2;color:#DC2626}
+  .booking{background:#fff;border:1px solid #EEF0F3;border-radius:12px;padding:14px;margin-bottom:10px}
+  .booking .h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .booking .time{font-size:13px;color:#374151;margin-top:6px;line-height:1.6}
+  .cancel{font-size:12px;color:#DC2626;padding:6px 10px;border-radius:8px;background:#FEF2F2}
+  .msg{background:#fff;border:1px solid #EEF0F3;border-radius:12px;padding:14px;margin-bottom:10px}
+  .msg .t{font-size:14px;font-weight:600}
+  .msg .b{font-size:13px;color:#4B5563;line-height:1.7;margin-top:6px;white-space:pre-wrap}
+  .msg .d{font-size:11px;color:#9CA3AF;margin-top:8px}
+  .msg.unread{border-color:#BFD3F8;background:#F7FAFF}
+  .tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #EEF0F3;
+        display:none;padding:8px 0 12px;z-index:9}
+  .tabs button{flex:1;font-size:12px;color:#9CA3AF;padding:6px 0}
+  .tabs button.on{color:#2563EB;font-weight:700}
+  .empty{text-align:center;color:#9CA3AF;font-size:13px;padding:36px 0}
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:rgba(17,24,39,.92);
+         color:#fff;font-size:13px;padding:10px 16px;border-radius:10px;opacity:0;transition:.2s;
+         pointer-events:none;max-width:80%;text-align:center;z-index:99}
+  .toast.on{opacity:1}
+  .hintbar{background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;border-radius:10px;
+           padding:10px 12px;font-size:12px;line-height:1.6;margin-bottom:12px}
+  /* 连接状态条：隧道重连 / 找不到服务时显示，让学生知道在等什么。
+     用普通文档流而不是 fixed，避免遮住顶部标题栏 */
+  .conn{background:#FEF3C7;color:#92400E;font-size:12px;padding:8px 14px;
+        text-align:center;display:none}
+  .conn.on{display:block}
+  .conn.bad{background:#FEE2E2;color:#991B1B}
+</style>
+</head>
+<body>
+
+<div class="conn" id="conn"></div>
+
+<div class="top">
+  <div>
+    <div class="brand">实验室预约</div>
+    <div class="who" id="who">正在连接服务…</div>
+  </div>
+  <button class="ghost" id="btnLogout" style="display:none" onclick="logout()">退出</button>
+</div>
+
+<main>
+  <!-- 登录 -->
+  <section id="view-login">
+    <div class="card">
+      <p class="title">登录</p>
+      <p class="muted">首次使用请先注册，等待管理员审批通过后即可预约。</p>
+      <input class="field" id="loginPhone" placeholder="手机号 / 管理员账号" autocomplete="username">
+      <input class="field" id="loginPwd" type="password" placeholder="密码" autocomplete="current-password">
+      <p class="err" id="loginErr"></p>
+      <button class="primary" onclick="doLogin()">登录</button>
+      <button class="link" onclick="show('register')">还没有账号？注册新账号</button>
+    </div>
+  </section>
+
+  <!-- 注册 -->
+  <section id="view-register" style="display:none">
+    <div class="card">
+      <p class="title">注册</p>
+      <p class="muted">需填写真实姓名与手机号，管理员审批通过后才能预约。</p>
+      <input class="field" id="regName" placeholder="姓名">
+      <input class="field" id="regPhone" placeholder="手机号" inputmode="numeric">
+      <input class="field" id="regPwd" type="password" placeholder="密码（至少 6 位）">
+      <div class="chips" style="margin-top:12px">
+        <button class="chip on" id="roleUser" onclick="pickRole(false)">我是学生</button>
+        <button class="chip" id="roleAdmin" onclick="pickRole(true)">申请分管理员</button>
+      </div>
+      <p class="err" id="regErr"></p>
+      <button class="primary" onclick="doRegister()">提交注册</button>
+      <button class="link" onclick="show('login')">已有账号？去登录</button>
+    </div>
+  </section>
+
+  <!-- 预约 -->
+  <section id="view-book" style="display:none">
+    <div class="hintbar" id="windowHint" style="display:none"></div>
+    <div class="card">
+      <p class="title">选择日期</p>
+      <div class="chips" id="dates"></div>
+      <p class="muted" id="dateNote" style="margin-top:6px"></p>
+    </div>
+    <div class="card">
+      <p class="title">选择实验室</p>
+      <div class="labs" id="labs"></div>
+    </div>
+    <div id="instruments"></div>
+    <div id="slotsCard" style="display:none">
+      <div class="card">
+        <div class="row">
+          <div>
+            <p class="title" id="slotTitle"></p>
+            <p class="muted" id="slotNote"></p>
+          </div>
+          <span class="tag" id="selCount">已选 0</span>
+        </div>
+        <div class="slots" id="slots"></div>
+        <div class="legend">
+          <span><i style="background:#fff;border:1px solid #C7D7F5"></i>空闲</span>
+          <span><i style="background:#2563EB"></i>已选</span>
+          <span><i style="background:#ECFDF5;border:1px solid #A7F3D0"></i>我的预约</span>
+          <span><i style="background:#F3F4F6;border:1px solid #E5E7EB"></i>已被占用（显示预约人）</span>
+        </div>
+        <button class="primary" id="btnBook" onclick="submitBooking()">提交预约</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 我的预约 -->
+  <section id="view-mine" style="display:none">
+    <div id="mineList"></div>
+  </section>
+
+  <!-- 消息 -->
+  <section id="view-msg" style="display:none">
+    <div class="row">
+      <p class="title" style="margin:0">站内消息</p>
+      <button class="ghost" onclick="markAllRead()">全部已读</button>
+    </div>
+    <div id="msgList"></div>
+  </section>
+</main>
+
+<nav class="tabs" id="tabs">
+  <button id="tab-book" class="on" onclick="switchTab('book')">预约</button>
+  <button id="tab-mine" onclick="switchTab('mine')">我的预约</button>
+  <button id="tab-msg" onclick="switchTab('msg')">消息</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var state = {
+  token: localStorage.getItem('lb_token') || '',
+  user: null,
+  dates: [],
+  labs: [],
+  instruments: [],
+  date: '',
+  labId: 0,
+  instrument: null,
+  slots: [],
+  selected: {},
+  canBook: false,
+  asAdmin: false
+};
+
+// ============================================================
+// API 基地址解析
+// ------------------------------------------------------------
+// 这个页面有两种打开方式：
+//   1) 局域网 / 隧道直连（地址形如 http://192.168.x.x:8080 或 https://xxx.tunnelmole.net）
+//      → 同源就是 API 地址，直接用 location.origin
+//   2) GitHub Pages 固定入口（https://<user>.github.io/<repo>/app.html）
+//      → 需要读同目录的 target.txt，拿到管理员手机当前的外网地址
+// 这样二维码地址永远不变，而真实服务地址可以随时变化。
+// ============================================================
+var apiBase = '';
+var baseResolved = false;
+
+function isFixedHost() {
+  return /\.github\.io$/i.test(location.hostname);
+}
+
+function fetchTimeout(url, opts, ms) {
+  return new Promise(function (resolve, reject) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); reject(new Error('timeout')); }, ms);
+    fetch(url, Object.assign({ signal: ctrl.signal }, opts || {}))
+      .then(function (r) { clearTimeout(timer); resolve(r); })
+      .catch(function (e) { clearTimeout(timer); reject(e); });
+  });
+}
+
+// 读 target.txt：{"url":"https://xxx.tunnelmole.net/","ts":...,"status":"ok|reconnecting"}
+// 主通道用同源 Pages（无 API 限流），但 Pages 部署有几十秒延迟，
+// 所以主通道拿到的地址不可用时，再走 GitHub API 兜底（即时生效）。
+function parseTarget(txt) {
+  var url = '', status = '';
+  try {
+    var j = JSON.parse(txt);
+    url = (j.url || '').trim();
+    status = (j.status || '').trim();
+  } catch (e) {
+    url = (txt || '').trim(); // 兼容旧版纯地址格式
+  }
+  return { url: url, status: status };
+}
+
+function apiTarget() {
+  // 从当前 Pages 地址反推仓库：<owner>.github.io/<repo>/app.html
+  var owner = location.hostname.replace(/\.github\.io$/i, '');
+  var repo = (location.pathname.split('/')[1] || '');
+  if (!owner || !repo) return Promise.reject(new Error('no repo'));
+  var u = 'https://api.github.com/repos/' + owner + '/' + repo +
+          '/contents/target.txt?t=' + Date.now();
+  return fetchTimeout(u, { cache: 'no-store' }, 6000)
+    .then(function (r) { if (!r.ok) throw new Error('api ' + r.status); return r.json(); })
+    .then(function (j) {
+      var raw = atob((j.content || '').replace(/\n/g, ''));
+      return parseTarget(raw);
+    });
+}
+
+function readTarget() {
+  return fetchTimeout('./target.txt?t=' + Date.now(), { cache: 'no-store' }, 8000)
+    .then(function (r) {
+      if (!r.ok) throw new Error('target http ' + r.status);
+      return r.text();
+    })
+    .then(parseTarget)
+    .catch(function () {
+      // 同源读不到（Pages 还没部署好）时，用 API 直接读仓库文件
+      return apiTarget();
+    })
+    .then(function (t) {
+      if (t.status === 'reconnecting' || !t.url) {
+        var err = new Error('管理员服务正在重连');
+        err.reconnecting = true;
+        throw err;
+      }
+      return t.url.replace(/\/+$/, '');
+    });
+}
+
+function resolveApiBase() {
+  if (!isFixedHost()) return Promise.resolve(location.origin);
+  return readTarget();
+}
+
+function connBar(text, bad) {
+  var el2 = el('conn');
+  if (!text) { el2.className = 'conn'; el2.textContent = ''; return; }
+  el2.textContent = text;
+  el2.className = 'conn on' + (bad ? ' bad' : '');
+}
+
+function ensureBase(force) {
+  if (apiBase && !force) return Promise.resolve(apiBase);
+  if (!isFixedHost()) { apiBase = location.origin; return Promise.resolve(apiBase); }
+  connBar('正在连接管理员服务…');
+  return resolveApiBase().then(function (base) {
+    apiBase = base;
+    baseResolved = true;
+    connBar('');
+    el('who').textContent = '已连接 · 服务地址 ' + base.replace(/^https?:\/\//, '');
+    return base;
+  }).catch(function (e) {
+    connBar('管理员手机正在切换网络，正在自动重连…', true);
+    throw e;
+  });
+}
+
+function el(id) { return document.getElementById(id); }
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
+  });
+}
+
+function toast(text) {
+  var t = el('toast');
+  t.textContent = text;
+  t.className = 'toast on';
+  setTimeout(function () { t.className = 'toast'; }, 2200);
+}
+
+// 统一请求：先确保拿到 API 地址，再发请求；网络失败时提示并允许重试
+function api(path, method, body) {
+  return ensureBase().then(function (base) {
+    var opt = { method: method || 'GET', headers: {} };
+    if (body) {
+      opt.headers['Content-Type'] = 'application/json';
+      opt.body = JSON.stringify(body);
+    }
+    if (state.token) opt.headers['X-Token'] = state.token;
+    return fetchTimeout(base + path, opt, 15000).then(function (r) {
+      return r.json();
+    }).then(function (j) {
+      if (!j.ok) throw new Error(j.error || '操作失败');
+      return j.data;
+    }).catch(function (e) {
+      // 网络层失败：清掉缓存的地址，下次自动重新解析（隧道可能换了）
+      if (e && (e.name === 'AbortError' || e.message === 'timeout' || e instanceof TypeError)) {
+        apiBase = '';
+        connBar('连接中断，正在重新定位服务…', true);
+      }
+      throw e;
+    });
+  }).catch(function (e) {
+    if (e.reconnecting) throw new Error('管理员手机正在切换网络，请稍候重试');
+    if (e.message === 'timeout') throw new Error('连接超时，请检查网络后重试');
+    if (e instanceof TypeError) throw new Error('无法连接服务，管理员可能暂时离线');
+    throw e;
+  });
+}
+
+function setToken(token, user) {
+  state.token = token;
+  state.user = user;
+  localStorage.setItem('lb_token', token);
+  var roleText = user.isAdmin ? (user.isSuper ? '总管理员' : '分管理员') : '学生';
+  el('who').textContent = user.name + ' · ' + roleText;
+  el('btnLogout').style.display = 'inline-block';
+  el('tabs').style.display = 'flex';
+}
+
+function clearSession() {
+  state.token = '';
+  state.user = null;
+  localStorage.removeItem('lb_token');
+  el('who').textContent = '正在连接服务…';
+  el('btnLogout').style.display = 'none';
+  el('tabs').style.display = 'none';
+}
+
+function show(view) {
+  ['login', 'register', 'book', 'mine', 'msg'].forEach(function (v) {
+    el('view-' + v).style.display = v === view ? 'block' : 'none';
+  });
+  ['book', 'mine', 'msg'].forEach(function (v) {
+    el('tab-' + v).className = v === view ? 'on' : '';
+  });
+  window.scrollTo(0, 0);
+}
+
+function switchTab(view) {
+  if (!state.user) return;
+  show(view);
+  if (view === 'mine') loadMine();
+  if (view === 'msg') loadMessages();
+}
+
+function pickRole(asAdmin) {
+  state.asAdmin = asAdmin;
+  el('roleUser').className = asAdmin ? 'chip' : 'chip on';
+  el('roleAdmin').className = asAdmin ? 'chip on' : 'chip';
+}
+
+// ---------------------------------------------------------------- 登录 / 注册
+
+function doLogin() {
+  var phone = el('loginPhone').value.trim();
+  var pwd = el('loginPwd').value;
+  el('loginErr').textContent = '';
+  if (!phone) { el('loginErr').textContent = '请输入手机号或管理员账号'; return; }
+  if (!pwd) { el('loginErr').textContent = '请输入密码'; return; }
+  api('/api/login', 'POST', { phone: phone, password: pwd }).then(function (d) {
+    setToken(d.token, d.user);
+    show('book');
+    loadWindow();
+    loadLabs();
+  }).catch(function (e) {
+    el('loginErr').textContent = e.message;
+  });
+}
+
+function doRegister() {
+  var name = el('regName').value.trim();
+  var phone = el('regPhone').value.trim();
+  var pwd = el('regPwd').value;
+  el('regErr').textContent = '';
+  if (name.length < 2) { el('regErr').textContent = '请填写真实姓名'; return; }
+  if (!/^1[3-9][0-9]{9}$/.test(phone)) { el('regErr').textContent = '请输入正确的手机号'; return; }
+  if (pwd.length < 6) { el('regErr').textContent = '密码至少 6 位'; return; }
+  api('/api/register', 'POST', { name: name, phone: phone, password: pwd, asAdmin: state.asAdmin })
+    .then(function (d) {
+      toast(d.message || '注册申请已提交');
+      el('loginPhone').value = phone;
+      el('loginPwd').value = '';
+      el('loginErr').textContent = '注册成功，等待管理员审批后即可登录预约';
+      show('login');
+    }).catch(function (e) {
+      el('regErr').textContent = e.message;
+    });
+}
+
+function logout() {
+  if (!confirm('确定退出登录吗？')) return;
+  api('/api/logout', 'POST', {}).catch(function () {});
+  clearSession();
+  show('login');
+}
+
+// ---------------------------------------------------------------- 预约
+
+function loadWindow() {
+  api('/api/window').then(function (w) {
+    state.dates = w.dates || [];
+    var hint = w.hint || '';
+    if (state.user && state.user.violationCount > 0) {
+      hint += '　当前违约 ' + state.user.violationCount + ' 次';
+    }
+    el('windowHint').style.display = hint ? 'block' : 'none';
+    el('windowHint').textContent = hint;
+    if (state.dates.length && !state.date) state.date = state.dates[0].date;
+    renderDates();
+  }).catch(function (e) { toast(e.message); });
+}
+
+function renderDates() {
+  var box = el('dates');
+  box.innerHTML = '';
+  if (!state.dates.length) {
+    el('dateNote').textContent = '当前没有可预约的日期，请留意开放时间';
+    return;
+  }
+  state.dates.forEach(function (d) {
+    var b = document.createElement('button');
+    b.className = 'chip' + (d.date === state.date ? ' on' : '');
+    b.textContent = d.label;
+    b.onclick = function () {
+      state.date = d.date;
+      renderDates();
+      if (state.instrument) loadSlots();
+    };
+    box.appendChild(b);
+  });
+  el('dateNote').textContent = '日期：' + state.date;
+}
+
+function loadLabs() {
+  api('/api/labs').then(function (labs) {
+    state.labs = labs || [];
+    if (!state.labId && state.labs.length) state.labId = state.labs[0].id;
+    renderLabs();
+    loadInstruments();
+  }).catch(function (e) { toast(e.message); });
+}
+
+function renderLabs() {
+  var box = el('labs');
+  box.innerHTML = '';
+  state.labs.forEach(function (lab) {
+    var b = document.createElement('button');
+    b.className = 'lab' + (lab.id === state.labId ? ' on' : '');
+    b.textContent = lab.name;
+    b.onclick = function () {
+      state.labId = lab.id;
+      state.instrument = null;
+      state.slots = [];
+      renderLabs();
+      el('slotsCard').style.display = 'none';
+      loadInstruments();
+    };
+    box.appendChild(b);
+  });
+}
+
+function loadInstruments() {
+  api('/api/instruments?labId=' + state.labId).then(function (list) {
+    state.instruments = (list || []).filter(function (i) { return i.active; });
+    renderInstruments();
+  }).catch(function (e) { toast(e.message); });
+}
+
+function renderInstruments() {
+  var box = el('instruments');
+  if (!state.instruments.length) {
+    box.innerHTML = '<div class="empty">该实验室暂无可预约仪器</div>';
+    return;
+  }
+  var html = '<div class="card"><p class="title">选择仪器</p>';
+  state.instruments.forEach(function (it) {
+    var on = state.instrument && state.instrument.id === it.id;
+    html += '<div class="item' + (on ? ' on' : '') + '" onclick="pickInstrument(' + it.id + ')">'
+      + '<div><div class="n">' + esc(it.name) + '</div>'
+      + '<div class="m">' + esc(it.model || '') + (it.note ? ' · ' + esc(it.note) : '') + '</div></div>'
+      + '<div class="go">' + (on ? '已选择' : '选择') + '</div></div>';
+  });
+  html += '</div>';
+  box.innerHTML = html;
+}
+
+function pickInstrument(id) {
+  var found = state.instruments.filter(function (i) { return i.id === id; });
+  state.instrument = found.length ? found[0] : null;
+  state.selected = {};
+  renderInstruments();
+  if (state.instrument) loadSlots();
+}
+
+function loadSlots() {
+  if (!state.instrument || !state.date) return;
+  api('/api/slots?instrumentId=' + state.instrument.id + '&date=' + encodeURIComponent(state.date))
+    .then(function (d) {
+      state.slots = d.slots || [];
+      state.canBook = !!d.canBook;
+      state.selected = {};
+      el('slotTitle').textContent = state.instrument.name + ' · ' + state.date;
+      el('slotNote').textContent = state.canBook
+        ? '点选空闲时段，可多选'
+        : '当前不在开放时间，仅可查看占用情况';
+      el('slotsCard').style.display = 'block';
+      renderSlots();
+    }).catch(function (e) { toast(e.message); });
+}
+
+function renderSlots() {
+  var box = el('slots');
+  box.innerHTML = '';
+  state.slots.forEach(function (s) {
+    var b = document.createElement('button');
+    var sel = !!state.selected[s.slot];
+    b.className = 'slot ' + (sel ? 'sel' : s.state);
+    if (s.state === 'busy' && s.owner) {
+      b.innerHTML = '<span class="t">' + esc(s.label) + '</span>'
+        + '<span class="o">' + esc(s.owner) + '</span>';
+      b.title = '已被 ' + s.owner + ' 预约';
+    } else {
+      b.textContent = s.label;
+    }
+    b.disabled = s.state !== 'free';
+    b.onclick = function () {
+      if (s.state !== 'free' || !state.canBook) return;
+      if (state.selected[s.slot]) delete state.selected[s.slot];
+      else state.selected[s.slot] = true;
+      renderSlots();
+    };
+    box.appendChild(b);
+  });
+  var count = Object.keys(state.selected).length;
+  el('selCount').textContent = '已选 ' + count;
+  el('btnBook').disabled = count === 0 || !state.canBook;
+  el('btnBook').textContent = state.canBook ? '提交预约' : '当前不可预约';
+}
+
+function submitBooking() {
+  var slots = Object.keys(state.selected).map(function (k) { return parseInt(k, 10); }).sort(function (a, b) { return a - b; });
+  if (!slots.length) { toast('请选择时段'); return; }
+  if (!confirm('确认预约 ' + state.date + ' 的 ' + slots.length + ' 个时段？')) return;
+  el('btnBook').disabled = true;
+  api('/api/book', 'POST', { instrumentId: state.instrument.id, date: state.date, slots: slots })
+    .then(function () {
+      toast('预约成功');
+      state.selected = {};
+      loadSlots();
+      show('mine');
+      loadMine();
+    }).catch(function (e) {
+      toast(e.message);
+      el('btnBook').disabled = false;
+    });
+}
+
+// ---------------------------------------------------------------- 我的预约
+
+function loadMine() {
+  var box = el('mineList');
+  box.innerHTML = '<div class="empty">加载中…</div>';
+  api('/api/bookings/my').then(function (d) {
+    var items = d.items || [];
+    if (!items.length) {
+      box.innerHTML = '<div class="empty">还没有预约记录</div>';
+      return;
+    }
+    var groups = {};
+    var order = [];
+    items.forEach(function (it) {
+      if (!groups[it.batchId]) {
+        groups[it.batchId] = {
+          batchId: it.batchId, date: it.date, labName: it.labName,
+          instrumentName: it.instrumentName, slots: [], status: it.status
+        };
+        order.push(it.batchId);
+      }
+      groups[it.batchId].slots.push(it.slot);
+      if (it.status === 'violation') groups[it.batchId].status = 'violation';
+    });
+    var html = '';
+    order.forEach(function (id) {
+      var g = groups[id];
+      var tag = g.status === 'active'
+        ? '<span class="tag act">已预约</span>'
+        : (g.status === 'violation' ? '<span class="tag vio">已违约</span>' : '<span class="tag">已取消</span>');
+      html += '<div class="booking">'
+        + '<div class="h"><div><div class="n">' + esc(g.instrumentName) + '</div>'
+        + '<div class="m">' + esc(g.labName) + ' · ' + esc(g.date) + '</div></div>'
+        + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">'
+        + tag
+        + (g.status === 'active'
+          ? '<button class="cancel" onclick="cancelBooking(\'' + g.batchId + '\')">取消预约</button>'
+          : '')
+        + '</div></div>'
+        + '<div class="time">' + esc(slotText(g.slots)) + '</div>'
+        + '</div>';
+    });
+    box.innerHTML = html;
+  }).catch(function (e) {
+    box.innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
+  });
+}
+
+function slotText(slots) {
+  var list = slots.slice().sort(function (a, b) { return a - b; });
+  var parts = [];
+  var start = list[0], prev = list[0];
+  for (var i = 1; i < list.length; i++) {
+    if (list[i] === prev + 1) { prev = list[i]; continue; }
+    parts.push(label(start) + '-' + label(prev + 1));
+    start = list[i]; prev = list[i];
+  }
+  parts.push(label(start) + '-' + label(prev + 1));
+  return parts.join('、');
+}
+
+function label(slot) {
+  var minutes = 8 * 60 + slot * 30;
+  var h = Math.floor(minutes / 60);
+  var m = minutes % 60;
+  return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+}
+
+function cancelBooking(batchId) {
+  if (!confirm('确定取消这次预约吗？')) return;
+  api('/api/bookings/cancel', 'POST', { batchId: batchId }).then(function () {
+    toast('已取消');
+    loadMine();
+  }).catch(function (e) { toast(e.message); });
+}
+
+// ---------------------------------------------------------------- 消息
+
+function loadMessages() {
+  var box = el('msgList');
+  box.innerHTML = '<div class="empty">加载中…</div>';
+  api('/api/messages').then(function (d) {
+    var items = d.items || [];
+    if (!items.length) {
+      box.innerHTML = '<div class="empty">暂无消息</div>';
+      return;
+    }
+    var html = '';
+    items.forEach(function (m) {
+      html += '<div class="msg' + (m.read ? '' : ' unread') + '">'
+        + '<div class="t">' + esc(m.title) + '</div>'
+        + '<div class="b">' + esc(m.body) + '</div>'
+        + '<div class="d">' + esc(timeText(m.createdAt)) + '</div>'
+        + '</div>';
+    });
+    box.innerHTML = html;
+  }).catch(function (e) {
+    box.innerHTML = '<div class="empty">' + esc(e.message) + '</div>';
+  });
+}
+
+function markAllRead() {
+  api('/api/messages/read', 'POST', {}).then(function () {
+    toast('已全部标记为已读');
+    loadMessages();
+  }).catch(function (e) { toast(e.message); });
+}
+
+function timeText(ms) {
+  var d = new Date(ms);
+  var p = function (n) { return (n < 10 ? '0' : '') + n; };
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' '
+    + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+// ---------------------------------------------------------------- 启动
+
+function enterApp() {
+  show('book');
+  loadWindow();
+  loadLabs();
+}
+
+function boot() {
+  var tries = 0;
+  // 管理员切换网络 / 隧道重连时，页面自动轮询等待，用户不需要手动刷新
+  function attempt() {
+    ensureBase(true).then(function () {
+      connBar('');
+      if (!state.token) { show('login'); return; }
+      api('/api/me').then(function (u) {
+        setToken(state.token, u);
+        enterApp();
+      }).catch(function () {
+        clearSession();
+        show('login');
+      });
+    }).catch(function () {
+      tries++;
+      if (tries < 40) {
+        connBar('管理员手机正在切换网络，正在自动重连…（' + tries + '）', true);
+        setTimeout(attempt, 3000);
+      } else {
+        connBar('暂时无法连接管理员服务，请确认管理员手机已开机并联网', true);
+        show('login');
+      }
+    });
+  }
+  attempt();
+}
+
+boot();
+</script>
+</body>
+</html>
